@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, Alert, Image } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as ImagePicker from 'expo-image-picker';
 import { COLORS, SPACING, SIZES } from '../constants/theme';
 import { ChatMessage } from '../components/ChatMessage';
-import { CHAT_HISTORY } from '../constants/data';
 import { Ionicons } from '@expo/vector-icons';
+import { generateCharacterResponse } from '../services/ai';
 
 export const ChatScreen = () => {
   const route = useRoute<any>();
@@ -13,9 +14,56 @@ export const ChatScreen = () => {
   const insets = useSafeAreaInsets();
   const { character } = route.params || {};
   const [messageText, setMessageText] = useState('');
-  const [messages, setMessages] = useState(CHAT_HISTORY);
+  const [messages, setMessages] = useState<any[]>([]);
+  const [isTyping, setIsTyping] = useState(false);
 
-  const handleSend = () => {
+  const pickImage = async () => {
+    // Request permission first
+    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    
+    if (permissionResult.granted === false) {
+      Alert.alert("Permission Required", "You need to allow access to your photos to upload screenshots.");
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+        const newMessage = {
+            id: Date.now().toString(),
+            sender: 'user',
+            text: '', 
+            imageUri: result.assets[0].uri,
+            isAction: false
+        };
+        
+        const updatedMessages = [...messages, newMessage];
+        setMessages(updatedMessages);
+        setIsTyping(true);
+
+        // Notify AI about the image (Contextual workaround since generic LLM API might not take images)
+        // We pass 'messages' (current state before this update) + the new message with descriptive text
+        const responseText = await generateCharacterResponse(
+            character || { name: 'Unknown', description: 'A mysterious stranger.' },
+            [...messages, { ...newMessage, text: '[User sent an image]' }]
+        );
+
+        const aiMessage = {
+            id: (Date.now() + 1).toString(),
+            sender: 'character',
+            text: responseText,
+            isAction: responseText.startsWith('*')
+        };
+        setMessages((prev) => [...prev, aiMessage]);
+        setIsTyping(false);
+    }
+  };
+
+  const handleSend = async () => {
     if (!messageText.trim()) return;
     
     const newMessage = {
@@ -25,8 +73,26 @@ export const ChatScreen = () => {
         isAction: false
     };
 
-    setMessages([...messages, newMessage]);
+    const updatedMessages = [...messages, newMessage];
+    setMessages(updatedMessages);
     setMessageText('');
+    setIsTyping(true);
+
+    // Call Groq AI
+    const responseText = await generateCharacterResponse(
+        character || { name: 'Unknown', description: 'A mysterious stranger.' },
+        updatedMessages
+    );
+
+    const aiMessage = {
+        id: (Date.now() + 1).toString(),
+        sender: 'character',
+        text: responseText,
+        isAction: responseText.startsWith('*') // Basic action detection
+    };
+
+    setMessages((prev) => [...prev, aiMessage]);
+    setIsTyping(false);
   };
 
   const renderHeader = () => (
@@ -37,12 +103,19 @@ export const ChatScreen = () => {
         
         <View style={styles.headerTitleContainer}>
             <View style={styles.headerAvatar}>
-               {/* Image placeholder */}
-               <Ionicons name="person" size={20} color="#666" />
+               {character?.image ? (
+                  <Image 
+                    source={typeof character.image === 'string' && character.image.startsWith('http') ? { uri: character.image } : character.image} 
+                    style={styles.headerImage} 
+                    resizeMode="cover" 
+                  />
+               ) : (
+                  <Ionicons name="person" size={20} color="#666" />
+               )}
             </View>
             <View>
                 <Text style={styles.headerName}>{character?.name || 'Theo Weston'}</Text>
-                 {/* Online status or subtitle could go here */}
+                <Text style={styles.headerStatus}>{isTyping ? 'Typing...' : (character?.creator || '@system')}</Text>
             </View>
         </View>
 
@@ -59,31 +132,36 @@ export const ChatScreen = () => {
 
   return (
     <View style={styles.container}>
-      {renderHeader()}
-      
-      <FlatList
-        data={messages}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-            <ChatMessage 
-                text={item.text} 
-                sender={item.sender as any} 
-                isAction={item.isAction} 
-            />
-        )}
-        contentContainerStyle={styles.listContent}
-      />
-
       <KeyboardAvoidingView 
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined} 
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
       >
+        {renderHeader()}
+        
+        <FlatList
+            style={{ flex: 1 }}
+            data={messages}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+                <ChatMessage 
+                    text={item.text} 
+                    sender={item.sender as any} 
+                    isAction={item.isAction} 
+                    name={item.sender === 'user' ? 'You' : (character?.name || 'Character')}
+                    avatar={item.sender === 'user' ? undefined : character?.image}
+                    imageUri={item.imageUri}
+                />
+            )}
+            contentContainerStyle={styles.listContent}
+        />
+
         <View style={[styles.inputContainer, { paddingBottom: insets.bottom + SPACING.s }]}>
             <View style={styles.inputWrapper}>
                 <TouchableOpacity style={styles.inputIcon}>
                      <Ionicons name="happy-outline" size={24} color={COLORS.textSecondary} />
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.inputIcon}>
+                <TouchableOpacity style={styles.inputIcon} onPress={pickImage}>
                      <Ionicons name="image-outline" size={24} color={COLORS.textSecondary} />
                 </TouchableOpacity>
                 
@@ -137,12 +215,21 @@ const styles = StyleSheet.create({
     backgroundColor: '#333',
     justifyContent: 'center',
     alignItems: 'center',
+    overflow: 'hidden', // Ensure image respects border radius
+  },
+  headerImage: {
+    width: '100%',
+    height: '100%',
     marginRight: SPACING.s,
   },
   headerName: {
     color: COLORS.text,
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  headerStatus: {
+    color: COLORS.textSecondary,
+    fontSize: 12,
   },
   headerActions: {
     flexDirection: 'row',

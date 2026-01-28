@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Image } from 'react-native';
 import { COLORS, SIZES, SPACING } from '../constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -7,17 +7,25 @@ interface MessageProps {
   text: string;
   sender: 'user' | 'character' | 'system';
   isAction?: boolean;
-  avatar?: string;
+  avatar?: any;
+  imageUri?: string;
+  name?: string;
 }
 
-export const ChatMessage: React.FC<MessageProps> = ({ text, sender, isAction, avatar }) => {
+export const ChatMessage: React.FC<MessageProps> = ({ text, sender, isAction, avatar, imageUri, name }) => {
   const isUser = sender === 'user';
   
   if (isUser) {
     return (
         <View style={styles.userMessageContainer}>
             <View style={styles.userBubble}>
-                <Text style={styles.userText}>{text}</Text>
+                {imageUri && (
+                  <Image 
+                    source={{ uri: imageUri }} 
+                    style={styles.messageImage} 
+                  />
+                )}
+                {text ? <Text style={styles.userText}>{text}</Text> : null}
             </View>
         </View>
     );
@@ -26,18 +34,30 @@ export const ChatMessage: React.FC<MessageProps> = ({ text, sender, isAction, av
   return (
     <View style={styles.characterMessageContainer}>
         <View style={styles.avatarContainer}>
-             {/* Placeholder Avatar */}
             <View style={styles.avatar}>
-               <Ionicons name="person" size={16} color="#ccc" />
+               {avatar ? (
+                 <Image 
+                    source={typeof avatar === 'string' && avatar.startsWith('http') ? { uri: avatar } : avatar} 
+                    style={styles.avatarImage} 
+                 />
+               ) : (
+                 <Ionicons name="person" size={16} color="#ccc" />
+               )}
             </View>
         </View>
         <View style={styles.characterContent}>
              <View style={styles.nameRow}>
-                <Text style={styles.characterName}>Theo Weston</Text>
+                <Text style={styles.characterName}>{name || 'Character'}</Text>
                 {/* Voice icon placeholder */}
                  <Ionicons name="volume-medium" size={14} color={COLORS.textSecondary} style={{marginLeft: 8}}/>
              </View>
             <View style={styles.characterBubble}>
+                {imageUri && (
+                  <Image 
+                    source={{ uri: imageUri }} 
+                    style={styles.messageImage} 
+                  />
+                )}
                 <Text style={[styles.characterText, isAction && styles.actionText]}>
                     {text}
                 </Text>
@@ -48,6 +68,14 @@ export const ChatMessage: React.FC<MessageProps> = ({ text, sender, isAction, av
 };
 
 const styles = StyleSheet.create({
+  messageImage: {
+    width: 200,
+    height: 150,
+    borderRadius: 8,
+    marginBottom: 8,
+    resizeMode: 'cover',
+    backgroundColor: '#333', // Dark background placeholder
+  },
   userMessageContainer: {
     alignSelf: 'flex-end',
     maxWidth: '80%',
@@ -82,6 +110,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#333',
     justifyContent: 'center',
     alignItems: 'center',
+    overflow: 'hidden',
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
   },
   characterContent: {
     flex: 1,

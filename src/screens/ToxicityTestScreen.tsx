@@ -1,68 +1,69 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated, Dimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS, SPACING, SIZES } from '../constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 
 const QUESTIONS = [
   {
     id: 1,
-    question: "Do you get secretly happy when a friend fails?",
-    options: ["Never", "Sometimes", "Often"],
+    question: "Does she get mad when you don't reply instantly?",
+    options: ["Never", "Sometimes", "Always creates a fight"],
     weights: [0, 5, 10]
   },
   {
     id: 2,
-    question: "How do you react to criticism?",
-    options: ["Reflect on it", "Get defensive", "Attack back"],
+    question: "Does she go through your phone without asking?",
+    options: ["No, she trusts me", "Once or twice", "Regularly checks it"],
     weights: [0, 5, 10]
   },
   {
     id: 3,
-    question: "Have you ever spread a rumor just for fun?",
-    options: ["No", "Maybe once", "Yes, it's entertaining"],
+    question: "Does she make you feel guilty for seeing your friends?",
+    options: ["Encourages me", "Makes sarcastic comments", "Starts a fight"],
     weights: [0, 5, 10]
   },
   {
     id: 4,
-    question: "If you found a wallet with cash, what would you do?",
-    options: ["Return it all", "Keep cash, return wallet", "Keep everything"],
+    question: "Does she bring up past mistakes in new arguments?",
+    options: ["Sticks to the topic", "Sometimes", "Keeps a scorecard"],
     weights: [0, 5, 10]
   },
   {
     id: 5,
-    question: "Do you think you are superior to most people?",
-    options: ["No", "In some ways", "Absolutely"],
+    question: "Does she threaten to break up to get her way?",
+    options: ["Never", "In heat of moment", "It's her go-to move"],
     weights: [0, 5, 10]
   },
   {
     id: 6,
-    question: "How often do you lie to get what you want?",
-    options: ["Rarely", "Occasionally", "Frequently"],
+    question: "Does she apologize when she is wrong?",
+    options: ["Yes, sincerely", "Reluctantly", "Never, turns it on me"],
     weights: [0, 5, 10]
   },
   {
     id: 7,
-    question: "Do you enjoy drama?",
-    options: ["Hate it", "Watch from sidelines", "Create it"],
+    question: "Does she post passive-aggressive aimed at you?",
+    options: ["No", "Subtweets sometimes", "Public shaming"],
     weights: [0, 5, 10]
   },
   {
     id: 8,
-    question: "Have you ever ghosted someone simply because you got bored?",
-    options: ["No", "Once or twice", "Yes, often"],
+    question: "Does she try to control what you wear or eat?",
+    options: ["No", "Gives opinions", "Demands changes"],
     weights: [0, 5, 10]
   },
   {
     id: 9,
-    question: "Do you apologize when you're wrong?",
-    options: ["Always", "Reluctantly", "Never"],
+    question: "Does she get jealous of female coworkers/friends?",
+    options: ["Secure", "Ask questions", "Accusatory/Paranoid"],
     weights: [0, 5, 10]
   },
   {
     id: 10,
-    question: "Do you manipulate people to your advantage?",
-    options: ["Never", "Unintentionally", "Yes, it's a skill"],
+    question: "Do you feel like you're walking on eggshells?",
+    options: ["Relaxed", "Sometimes", "Constantly anxious"],
     weights: [0, 5, 10]
   }
 ];
@@ -96,10 +97,10 @@ export const ToxicityTestScreen = () => {
   };
 
   const getToxicityLevel = (finalScore: number) => {
-    if (finalScore < 20) return { label: "Pure Soul", color: "#4CAF50" };
-    if (finalScore < 50) return { label: "Human, Flawed", color: "#FFC107" };
-    if (finalScore < 80) return { label: "Toxic Hazard", color: "#FF5722" };
-    return { label: "Radioactive", color: "#D32F2F" };
+    if (finalScore < 20) return { label: "She's a Keeper", color: "#4CAF50" };
+    if (finalScore < 50) return { label: "Typical Human", color: "#FFC107" };
+    if (finalScore < 80) return { label: "Walking Red Flag", color: "#FF5722" };
+    return { label: "Run For The Hills", color: "#FF0055" };
   };
 
   const resetTest = () => {
@@ -113,7 +114,7 @@ export const ToxicityTestScreen = () => {
     return (
       <View style={[styles.container, { paddingTop: insets.top }]}>
         <View style={styles.resultCard}>
-            <Text style={styles.resultTitle}>Toxicity Score</Text>
+            <Text style={styles.resultTitle}>Gf Toxicity Score</Text>
             <View style={[styles.scoreCircle, { borderColor: level.color }]}>
                 <Text style={[styles.scoreText, { color: level.color }]}>{score}%</Text>
             </View>
@@ -185,10 +186,11 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   progressBar: {
-    height: 4,
-    backgroundColor: COLORS.surfaceHighlight,
-    borderRadius: 2,
+    height: 6,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 3,
     width: '100%',
+    overflow: 'hidden',
   },
   progressFill: {
     height: '100%',

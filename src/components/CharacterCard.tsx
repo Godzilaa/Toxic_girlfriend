@@ -8,7 +8,7 @@ interface CardProps {
   description: string;
   chats: string;
   creator: string;
-  image: string; // In a real app this would be a uri
+  image: any; 
   onPress: () => void;
 }
 
@@ -16,10 +16,17 @@ export const CharacterCard: React.FC<CardProps> = ({ name, description, chats, c
   return (
     <TouchableOpacity style={styles.card} onPress={onPress}>
       <View style={styles.imageContainer}>
-         {/* Placeholder for image since we don't have real assets */}
-        <View style={[styles.image, { backgroundColor: '#333' }]} >
-            <Ionicons name="person" size={40} color="#555" />
-        </View>
+         {image ? (
+            <Image 
+                source={typeof image === 'string' && image.startsWith('http') ? { uri: image } : image} 
+                style={styles.image} 
+                resizeMode="cover" 
+            />
+         ) : (
+            <View style={[styles.image, { backgroundColor: '#333' }]} >
+                <Ionicons name="person" size={40} color="#555" />
+            </View>
+         )}
       </View>
       <View style={styles.content}>
         <Text style={styles.title} numberOfLines={1}>{name}</Text>
