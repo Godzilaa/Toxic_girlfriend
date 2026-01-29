@@ -28,8 +28,8 @@
 
 1.  **Clone the repository**
     ```bash
-    git clone https://github.com/your-username/alter.git
-    cd alter
+    git clone https://github.com/your-username/Toxic_girlfreind.git
+    cd Toxic_girlfreind
     ```
 
 2.  **Install dependencies**
