@@ -1,10 +1,10 @@
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
-import { auth } from "./auth";
+import { config } from "dotenv";
+import { auth } from "./auth.js";
 
 // Load environment variables
-dotenv.config();
+config();
 
 const app = express();
 const PORT = process.env.PORT || 8081;
@@ -16,22 +16,8 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// Mount Better Auth routes
-app.all("/api/auth/*", async (req, res) => {
-  const response = await auth.handler(
-    new Request(`${req.protocol}://${req.get('host')}${req.originalUrl}`, {
-      method: req.method,
-      headers: req.headers as Record<string, string>,
-      body: req.method !== 'GET' && req.method !== 'HEAD' ? JSON.stringify(req.body) : undefined,
-    })
-  );
-  
-  response.headers.forEach((value, key) => {
-    res.setHeader(key, value);
-  });
-  
-  res.status(response.status).send(await response.text());
-});
+// Mount Better Auth routes - use toNodeHandler for Express compatibility
+app.all("/api/auth/*", auth.handler);
 
 // Health check endpoint
 app.get("/health", (req, res) => {
